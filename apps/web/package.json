@@ -11,13 +11,15 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/ui": "*",
     "@repo/db": "*",
+    "@repo/ui": "*",
     "@types/axios": "^0.9.36",
     "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/next-auth": "^3.13.0",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.2",
     "next": "^15.4.2",
     "next-auth": "^4.24.11",
     "react": "^19.1.0",

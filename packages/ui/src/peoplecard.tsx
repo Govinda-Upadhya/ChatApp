@@ -5,6 +5,7 @@ interface requestCardProps {
   name: string;
   image: string;
   sendreq: () => void;
+  status: string;
 }
 
 const PeopleCards = (props: requestCardProps) => {
@@ -27,10 +28,15 @@ const PeopleCards = (props: requestCardProps) => {
       <div className="flex gap-2">
         <button
           onClick={props.sendreq}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-white bg-blue-600 rounded-md text-xs hover:bg-blue-700 transition"
+          disabled={!(props.status == "notsend")}
+          className={`flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-white ${props.status == "notsend" ? "bg-blue-600" : "bg-gray-500"} rounded-md text-xs hover:bg-blue-700 transition`}
         >
-          <Check className="w-4 h-4" />
-          Send Request
+          {props.status == "notsend" ? <Check className="w-4 h-4" /> : ""}
+          {props.status == "notsend"
+            ? `Send Request`
+            : props.status == "PENDING"
+              ? "pending"
+              : "undefined"}
         </button>
       </div>
     </div>

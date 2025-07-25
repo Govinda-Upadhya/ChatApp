@@ -10,10 +10,29 @@ import { PeopleCards } from "@repo/ui/peoplecard";
 import { Topbar } from "@repo/ui/topbar";
 import { ChatWindow } from "@repo/ui/chatbox";
 import { Lens } from "@repo/ui/lens";
+import axios from "axios";
+interface searchData {
+  type: string;
+  item: String;
+}
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState<string>("messages");
   const [placeholder, setPlaceholder] = useState("messages");
+  const [searchItem, setSearchItem] = useState("none");
+  const [people, setPeople] = useState<
+    {
+      name: string;
+      image: string | null;
+      status: string | null;
+    }[]
+  >([]);
+
+  useEffect(() => {
+    // search({ item: searchItem, type: activeSection });
+
+    return () => {};
+  }, [searchItem]);
   useEffect(() => {
     if (activeSection == "message") {
       setPlaceholder("messages");
@@ -30,7 +49,7 @@ export default function Page() {
           {activeSection == "messages" ? <h1>Messages</h1> : <h1>Requests</h1>}
         </div>
 
-        <Search placeholder={placeholder} />
+        <Search placeholder={placeholder} setSearch={setSearchItem} />
         <div className="flex w-full h-[5%]">
           <div
             className="flex w-full"
@@ -93,11 +112,15 @@ export default function Page() {
             </>
           ) : (
             <>
-              <PeopleCards
-                image="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Chess_kdt45.svg/800px-Chess_kdt45.svg.png"
-                name="govinda"
-                sendreq={() => console.log("accepted")}
-              />
+              {people.map((person, key) => (
+                <PeopleCards
+                  key={key}
+                  image="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Chess_kdt45.svg/800px-Chess_kdt45.svg.png"
+                  name="govinda"
+                  status="hello"
+                  sendreq={() => console.log("done")}
+                />
+              ))}
             </>
           )}
         </div>
