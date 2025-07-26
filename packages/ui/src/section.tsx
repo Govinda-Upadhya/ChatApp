@@ -1,7 +1,7 @@
 import React, { ComponentType, forwardRef, SVGProps, useState } from "react";
 
 interface SectionProps {
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   title: string;
   notification?: number;
   active: boolean;

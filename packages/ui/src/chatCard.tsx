@@ -2,9 +2,10 @@ import React, { useState } from "react";
 
 interface chatProps {
   name: string;
-  message: string;
+
   image: string;
-  time: string;
+
+  onclick: () => void;
 }
 const ChatCard = (props: chatProps) => {
   const [chatLength, setChatlength] = useState();
@@ -21,15 +22,10 @@ const ChatCard = (props: chatProps) => {
       <div className="flex flex-col justify-items-center w-full  ">
         <div className="flex justify-between px-2">
           <div className="font-bold">{props.name}</div>
-          <div className="text-gray-400 text-sm">{props.time}</div>
         </div>
-        <div className="flex px-2">
-          {props.message.length <= 15 ? (
-            <p>{props.message}</p>
-          ) : (
-            <p>{props.message.slice(0, 15)}...</p>
-          )}
-        </div>
+      </div>
+      <div className="flex px-2">
+        <button onClick={props.onclick}>Message</button>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ const Page = async () => {
   });
   return (
     <div>
-      hello tohome {mainuser.username} <img src={mainuser?.profile} alt="" />
+      hello tohome {mainuser?.username} <img src={mainuser?.profile} alt="" />
     </div>
   );
 };

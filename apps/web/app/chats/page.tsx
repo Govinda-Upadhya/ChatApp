@@ -27,9 +27,61 @@ export default function Page() {
       status: string | null;
     }[]
   >([]);
-
+  const [chats, setChats] = useState([]);
+  const [requests, setRequests] = useState([]);
+  async function requestHandle(option: string, person: string) {
+    let res = await axios.post("http://localhost:3001/api/handleRequest", {
+      type: option,
+      person: person,
+    });
+    if (res.status == 200) {
+      alert("request accepted");
+    } else {
+      console.log(res);
+    }
+  }
+  async function sendRequest(username: string) {
+    let res = await axios.post("http://localhost:3001/api/sendReuqest", {
+      username,
+    });
+    if (res.status == 200) {
+      alert("requets send");
+    }
+  }
+  async function fetchpeople() {
+    let res = await axios.get("http://localhost:3001/api/people");
+    setPeople(res.data.people);
+  }
+  async function fetchRequest() {
+    let res = await axios.get("http://localhost:3001/api/requests");
+    if (res.data.requests.length != 0) {
+      setRequests(res.data.requests);
+    }
+  }
+  async function fetchChats() {
+    let res = await axios.get("http://localhost:3001/api/chats");
+    setChats(res.data.friends);
+  }
+  async function search(data: searchData) {
+    let res = await axios.get("http://localhost:3001/api/search", {
+      params: {
+        type: data.type,
+        item: data.item,
+      },
+    });
+    if (res.status == 200) {
+      if (res.data.type == "search") {
+        setPeople(res.data.people);
+      }
+    }
+  }
   useEffect(() => {
-    // search({ item: searchItem, type: activeSection });
+    fetchpeople();
+    fetchRequest();
+    fetchChats();
+  }, []);
+  useEffect(() => {
+    search({ item: searchItem, type: activeSection });
 
     return () => {};
   }, [searchItem]);
@@ -93,32 +145,37 @@ export default function Page() {
         <div className="flex flex-col w-full h-[60%] mt-5 overflow-auto gap-2 ">
           {activeSection == "messages" ? (
             <>
-              <ChatCard
-                message="hello"
-                image="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Chess_kdt45.svg/800px-Chess_kdt45.svg.png"
-                name="govinda"
-                time="2:40PM"
-              />
+              {chats.map((chat, key) => (
+                <ChatCard
+                  key={key}
+                  image={chat.profile}
+                  name={chat.username}
+                  onclick={() => console.log("open message")}
+                />
+              ))}
             </>
           ) : activeSection == "requests" ? (
             <>
-              <RequestCard
-                image="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Chess_kdt45.svg/800px-Chess_kdt45.svg.png"
-                name="govinda"
-                accept={() => console.log("accepted")}
-                reject={() => console.log("rejected")}
-                time="2 min"
-              />
+              {requests.map((request, key) => (
+                <RequestCard
+                  key={key}
+                  image={request.profile}
+                  name={request.sender}
+                  time={request.sendAt}
+                  accept={() => requestHandle("accept", request.sender)}
+                  reject={() => requestHandle("reject", request.sender)}
+                />
+              ))}
             </>
           ) : (
             <>
               {people.map((person, key) => (
                 <PeopleCards
                   key={key}
-                  image="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Chess_kdt45.svg/800px-Chess_kdt45.svg.png"
-                  name="govinda"
-                  status="hello"
-                  sendreq={() => console.log("done")}
+                  image={person.profile}
+                  name={person.username}
+                  status={person.status}
+                  sendreq={() => sendRequest(person.username)}
                 />
               ))}
             </>

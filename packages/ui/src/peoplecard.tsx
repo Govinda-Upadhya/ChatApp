@@ -29,14 +29,10 @@ const PeopleCards = (props: requestCardProps) => {
         <button
           onClick={props.sendreq}
           disabled={!(props.status == "notsend")}
-          className={`flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-white ${props.status == "notsend" ? "bg-blue-600" : "bg-gray-500"} rounded-md text-xs hover:bg-blue-700 transition`}
+          className={`flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-white ${props.status == "notsend" ? "bg-blue-600 hover:bg-blue-700 " : "bg-gray-500"} rounded-md text-xs transition`}
         >
           {props.status == "notsend" ? <Check className="w-4 h-4" /> : ""}
-          {props.status == "notsend"
-            ? `Send Request`
-            : props.status == "PENDING"
-              ? "pending"
-              : "undefined"}
+          {props.status == "notsend" ? `Send Request` : props.status}
         </button>
       </div>
     </div>

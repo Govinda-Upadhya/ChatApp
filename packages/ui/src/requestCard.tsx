@@ -16,7 +16,6 @@ const RequestCard = (props: requestCardProps) => {
       <div className="flex items-start gap-3">
         <img
           src={props.image}
-          alt={`${props.name}'s avatar`}
           className="w-10 h-10 rounded-full object-cover"
         />
         <div>
