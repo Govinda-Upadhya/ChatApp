@@ -19,7 +19,7 @@ model User {
   password         String?
   profile          String?   @default("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXItcm91bmQtaWNvbiBsdWNpZGUtdXNlci1yb3VuZCI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI1Ii8+PHBhdGggZD0iTTIwIDIxYTggOCAwIDAgMC0xNiAwIi8+PC9zdmc+")
   googleId         String?
-  room             Room[]
+
   
   sentChats        Chat[]           @relation("SentChats")
   receivedChats    Chat[]           @relation("ReceivedChats")
@@ -45,7 +45,7 @@ model Chat {
 model Room {
   id     Int     @id @default(autoincrement())
   name   String?
-  users  User[]
+ friendship  Friendship? @relation("RoomFriendship")
 }
 
 model FriendRequest {
@@ -63,7 +63,9 @@ model Friendship {
   user1     String
   user2     String
   createdAt DateTime @default(now())
+  roomId    Int @unique
 
+  room  Room  @relation("RoomFriendship",fields: [roomId],references: [id])
   userA     User     @relation("FriendshipUser1", fields: [user1], references: [username])
   userB     User     @relation("FriendshipUser2", fields: [user2], references: [username])
 

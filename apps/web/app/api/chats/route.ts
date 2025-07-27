@@ -22,6 +22,11 @@ export async function GET() {
           profile: true,
         },
       },
+      room: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
 
@@ -30,6 +35,7 @@ export async function GET() {
     return {
       username: isUser1 ? f.user2 : f.user1,
       profile: isUser1 ? f.userB.profile : f.userA.profile,
+      roomId: f.roomId,
     };
   });
   console.log("friends", friends);

@@ -1,19 +1,19 @@
-import { prismaClient } from "@repo/db/client";
-import { getServerSession } from "next-auth";
+"use client";
 
-const Page = async () => {
-  const data = await getServerSession();
-  console.log(data);
-  const mainuser = await prismaClient.user.findFirst({
-    where: {
-      username: data.user.name,
-    },
-  });
+import { useSession } from "next-auth/react";
+
+const ClientPage = () => {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") return <p>Loading session...</p>;
+  if (!session) return <p>You are not signed in.</p>;
+
   return (
     <div>
-      hello tohome {mainuser?.username} <img src={mainuser?.profile} alt="" />
+      Hello, {session.user?.name}
+      <img src={session.user?.image} alt="profile" />
     </div>
   );
 };
 
-export default Page;
+export default ClientPage;

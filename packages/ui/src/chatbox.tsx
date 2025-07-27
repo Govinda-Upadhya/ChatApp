@@ -2,81 +2,53 @@ import { Send } from "lucide-react";
 import React, { useState } from "react";
 
 interface Message {
-  text: string;
+  mainText: string;
   time: string;
-  sender: "me" | "other";
+  author: string;
+}
+interface Messageprops {
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  onclick: (message: Message) => void;
+  person: string;
 }
 
-const messagesMock: Message[] = [
-  {
-    text: "Hey! Are we still on for dinner tonight?",
-    time: "2:45 PM",
-    sender: "other",
-  },
-  {
-    text: "Hey! Are we still on for dinner tonight?",
-    time: "2:45 PM",
-    sender: "other",
-  },
-  {
-    text: "Hey! Are we still on for dinner tonight?",
-    time: "2:45 PM",
-    sender: "other",
-  },
-  {
-    text: "Yes! Looking forward to it. How about 7 PM at that new Italian place?",
-    time: "2:47 PM",
-    sender: "me",
-  },
-  {
-    text: "Perfect! I'll make a reservation. Can't wait to catch up!",
-    time: "2:48 PM",
-    sender: "other",
-  },
-];
-
-const ChatWindow = () => {
-  const [messages, setMessages] = useState<Message[]>(messagesMock);
+const ChatWindow = (props: Messageprops) => {
   const [input, setInput] = useState("");
 
   const handleSend = () => {
-    if (input.trim()) {
-      setMessages([
-        ...messages,
-        {
-          text: input.trim(),
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          sender: "me",
-        },
-      ]);
-      setInput("");
-    }
+    const newMessage = {
+      mainText: input,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      author: props.person,
+    };
+    props.setMessages((prev) => [...prev, newMessage]);
+    setInput("");
+    props.onclick(newMessage);
   };
 
   return (
     <div className="flex flex-col h-[90%] w-full bg-white">
       {/* Messages container */}
       <div className="flex-1 overflow-auto p-4 space-y-4">
-        {messages.map((msg, i) => (
+        {props.messages.map((msg, i) => (
           <div
             key={i}
             className={`max-w-[70%] p-3 rounded-lg ${
-              msg.sender === "me"
+              msg.author === "me"
                 ? "bg-blue-600 text-white self-end"
                 : "bg-gray-100 text-gray-900 self-start"
             }`}
           >
-            <p className="text-sm">{msg.text}</p>
+            <p className="text-sm">{msg.mainText}</p>
             <p
               className={`text-xs mt-1 ${
-                msg.sender === "me" ? "text-blue-200" : "text-gray-500"
+                msg.author === "me" ? "text-blue-200" : "text-gray-500"
               }`}
-            >
-              {msg.time}
-            </p>
+            ></p>
           </div>
         ))}
       </div>
@@ -89,7 +61,6 @@ const ChatWindow = () => {
           placeholder="Type a message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button
           onClick={handleSend}

@@ -9,12 +9,6 @@ export async function POST(req: NextRequest) {
   const user = session?.user?.name;
 
   if (data.type == "accept") {
-    // let friendshipexists1 = await prismaClient.friendship.findFirst({
-    //   where: {
-    //     user1: user,
-    //     user2: data.person,
-    //   },
-    // });
     let friendshipexists2 = await prismaClient.friendship.findFirst({
       where: {
         user1: data.person,
@@ -22,10 +16,16 @@ export async function POST(req: NextRequest) {
       },
     });
     if (!friendshipexists2) {
+      let roomId = await prismaClient.room.create({
+        data: {
+          name: `${user} and ${data.person}`,
+        },
+      });
       let makefriendShip = await prismaClient.friendship.create({
         data: {
           user1: user,
           user2: data.person,
+          roomId: roomId.id,
         },
       });
       const request = await prismaClient.friendRequest.findFirst({
