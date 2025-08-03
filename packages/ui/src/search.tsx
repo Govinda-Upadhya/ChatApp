@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Lens } from "./lens";
-import axios from "axios";
+
 interface SearchProps {
   placeholder: string;
   setSearch: (item: string) => void;

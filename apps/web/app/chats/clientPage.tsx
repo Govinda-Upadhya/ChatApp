@@ -13,6 +13,7 @@ import { Lens } from "@repo/ui/lens";
 import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import { getToken } from "next-auth/jwt";
 interface searchData {
   type: string;
   item: String;
@@ -22,15 +23,23 @@ interface clientPageProps {
 }
 
 export default function ClientPage(props: clientPageProps) {
+  const [messesageSection, setmessageSection] = useState(false);
   const [curruser, setcurruser] = useState<string>(props.user);
   const [activeSection, setActiveSection] = useState<string>("messages");
   const [iosocket, setSocket] = useState<Socket>();
   const [placeholder, setPlaceholder] = useState("messages");
   const [searchItem, setSearchItem] = useState("none");
   const [roomId, setRoomId] = useState<number>(0);
+  const [friend, setFriend] = useState<{ username: string; profile: string }>();
 
   const [messages, setMessages] = useState<
-    { author: string; mainText: string; time: string }[]
+    {
+      sender: string;
+      receiver: string;
+      message: string;
+      time: string;
+      id?: number;
+    }[]
   >([]);
   const [people, setPeople] = useState<
     {
@@ -55,6 +64,7 @@ export default function ClientPage(props: clientPageProps) {
       message: message,
       roomId: roomId,
       curruser: curruser,
+      friend: friend,
     });
   }
   async function requestHandle(option: string, person: string) {
@@ -80,8 +90,9 @@ export default function ClientPage(props: clientPageProps) {
     let res = await axios.get("http://localhost:3001/api/people");
     setPeople(res.data.people);
   }
-  async function handleChat(roomId: number) {
-    iosocket?.emit("joinroom", { roomId: roomId });
+  async function handleChat(roomId: number, friendname: string) {
+    setmessageSection(true);
+    iosocket?.emit("joinroom", { roomId: roomId, friendname });
     setRoomId(roomId);
   }
   async function fetchRequest() {
@@ -109,25 +120,48 @@ export default function ClientPage(props: clientPageProps) {
     }
   }
   useEffect(() => {
-    const socket: Socket = io("http://localhost:3000");
+    async function serve() {
+      const res = await axios.get("http://localhost:3001/api/token");
+      console.log(res.data);
+      const socket: Socket = io("http://localhost:3000", {
+        auth: {
+          token: res.data.token,
+        },
+      });
 
-    socket.on("connect", () => console.log("connected with id", socket.id));
-    socket.emit("message", "hello server");
-    socket.on("ack", (msg) => alert(msg));
-    socket.on("joinack", (msg) => alert(msg));
-    socket.on("messagefromfriend", ({ message, user }) => {
-      console.log("message from friend", { message, user });
-      console.log("cuuruser", curruser);
-      if (curruser != user) {
-        setMessages((prev) => [...prev, message]);
-        console.log("messagefromfriend", message);
-      }
-    });
+      socket.on("connect", () => console.log("connected with id", socket.id));
+      socket.emit("message", "hello server");
+      socket.on("ack", (msg) => alert(msg));
+      socket.on("joinack", async ({ mesage, friendname }) => {
+        alert(mesage);
+        let res = await axios.get("http://localhost:3001/api/getMessages", {
+          params: {
+            user1: friendname,
+            user2: curruser,
+          },
+        });
+        console.log(res.data.message);
 
-    setSocket(socket);
-    fetchpeople();
-    fetchRequest();
-    fetchChats();
+        setMessages(res.data.message);
+      });
+      socket.on("messagefromfriend", ({ message, user }) => {
+        console.log("message from friend", { message, user });
+        console.log("cuuruser", curruser);
+        if (curruser != user) {
+          setMessages((prev) => [...prev, message]);
+          console.log("messagefromfriend", message);
+        }
+      });
+      socket.on("messagefromfriendnotreceived", ({ message }) => {
+        alert("not send");
+      });
+
+      setSocket(socket);
+      fetchpeople();
+      fetchRequest();
+      fetchChats();
+    }
+    serve();
   }, []);
   useEffect(() => {
     search({ item: searchItem, type: activeSection });
@@ -202,7 +236,12 @@ export default function ClientPage(props: clientPageProps) {
                   name={chat.username}
                   onclick={() => {
                     const roomId = chat.roomId;
-                    handleChat(roomId);
+
+                    setFriend({
+                      username: chat.username,
+                      profile: chat.profile,
+                    });
+                    handleChat(roomId, chat.username);
                   }}
                 />
               ))}
@@ -236,17 +275,34 @@ export default function ClientPage(props: clientPageProps) {
         </div>
       </div>
       <div className="h-full w-[60%]">
-        <Topbar
-          image="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Chess_kdt45.svg/800px-Chess_kdt45.svg.png"
-          name="Govinda"
-          time="2min"
-        />
-        <ChatWindow
-          messages={messages}
-          setMessages={setMessages}
-          onclick={(message) => handleMessagesend(message)}
-          person={curruser}
-        />
+        {messesageSection ? (
+          <>
+            <Topbar friend={friend} />
+            <ChatWindow
+              messages={messages}
+              friend={friend.username}
+              setMessages={setMessages}
+              onclick={(message) => handleMessagesend(message)}
+              person={curruser}
+            />
+          </>
+        ) : (
+          <>
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 px-4 text-center">
+              <img
+                src="https://undraw.io/assets/undraw_messages_re_qy9x.svg"
+                alt="No chat selected"
+                className="w-48 mb-6 opacity-80"
+              />
+              <h2 className="text-xl font-semibold mb-2">
+                No conversation selected
+              </h2>
+              <p className="text-sm">
+                Select a chat from the sidebar to start messaging.
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

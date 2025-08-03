@@ -2,24 +2,23 @@ import { Video } from "lucide-react";
 import React from "react";
 
 interface TopBarProps {
-  image: string;
-  name: string;
-  time: string;
+  friend: { username: string; profile: string };
 }
 
-const Topbar = ({ image, name, time }: TopBarProps) => {
+const Topbar = (props: TopBarProps) => {
   return (
     <div className="w-full h-[10%] flex items-center justify-between px-4 py-2 border-b border-gray-200">
       {/* Left Side: Avatar + Info */}
       <div className="flex items-center gap-3">
         <img
-          src={image}
+          src={props.friend.profile}
           alt="User"
           className="h-10 w-10 rounded-full object-cover"
         />
         <div>
-          <p className="text-sm font-semibold text-gray-800">{name}</p>
-          <p className="text-xs text-gray-500">{time}</p>
+          <p className="text-sm font-semibold text-gray-800">
+            {props.friend.username}
+          </p>
         </div>
       </div>
 
