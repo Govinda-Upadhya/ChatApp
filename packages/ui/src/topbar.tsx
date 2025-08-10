@@ -3,6 +3,7 @@ import React from "react";
 
 interface TopBarProps {
   friend: { username: string; profile: string };
+  onclick: () => void;
 }
 
 const Topbar = (props: TopBarProps) => {
@@ -23,7 +24,10 @@ const Topbar = (props: TopBarProps) => {
       </div>
 
       {/* Right Side: Icon */}
-      <div className="text-gray-600 hover:text-black cursor-pointer">
+      <div
+        className="text-gray-600 hover:text-black cursor-pointer"
+        onClick={props.onclick}
+      >
         <Video className="w-5 h-5" />
       </div>
     </div>

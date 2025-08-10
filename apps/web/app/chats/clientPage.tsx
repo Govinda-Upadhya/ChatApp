@@ -14,6 +14,8 @@ import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
+import peer from "../../lib/service";
+import { off } from "process";
 interface searchData {
   type: string;
   item: String;
@@ -23,6 +25,13 @@ interface clientPageProps {
 }
 
 export default function ClientPage(props: clientPageProps) {
+  const roomRef = useRef<number>(0);
+  const [localStream, setLocalStream] = useState<MediaStream>();
+  const peer = useRef<RTCPeerConnection>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream>();
+
+  const myvideo = useRef<HTMLVideoElement>(null);
+  const remoteVideo = useRef<HTMLVideoElement>(null);
   const [messesageSection, setmessageSection] = useState(false);
   const [curruser, setcurruser] = useState<string>(props.user);
   const [activeSection, setActiveSection] = useState<string>("messages");
@@ -57,6 +66,55 @@ export default function ClientPage(props: clientPageProps) {
   >([]);
 
   const [requests, setRequests] = useState([]);
+  async function handleVideo() {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+    setLocalStream(stream);
+    const newpeer = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: [
+            "stun:stun.l.google.com:19302", // Free public STUN server
+            "stun:global.stun.twilio.com:3478", // Another STUN option
+          ],
+        },
+      ],
+    });
+    stream.getTracks().forEach((track) => newpeer.addTrack(track, stream));
+    peer.current = newpeer;
+    newpeer.ontrack = (event) => {
+      console.log("got tracks");
+      console.log("trakcs", event.streams[0]);
+      setRemoteStream(event.streams[0]);
+    };
+    newpeer.onicecandidate = (event) => {
+      if (event.candidate) {
+        iosocket.emit("icecandidate", {
+          candidate: event.candidate,
+          roomId: roomRef.current,
+        });
+      }
+    };
+    const offer = await newpeer.createOffer();
+    await newpeer?.setLocalDescription(offer);
+    iosocket?.emit("calloffer", { offer, roomId: roomRef.current });
+    console.log("offer send", offer);
+  }
+  useEffect(() => {
+    if (localStream && myvideo.current) {
+      myvideo.current.srcObject = localStream;
+    }
+
+    return () => {};
+  }, [localStream]);
+  useEffect(() => {
+    if (remoteStream && remoteVideo.current) {
+      remoteVideo.current.srcObject = remoteStream;
+    }
+    return () => {};
+  }, [remoteStream]);
   async function handleMessagesend(message) {
     console.log("message send triggered");
     console.log(messages);
@@ -93,7 +151,9 @@ export default function ClientPage(props: clientPageProps) {
   async function handleChat(roomId: number, friendname: string) {
     setmessageSection(true);
     iosocket?.emit("joinroom", { roomId: roomId, friendname });
+    console.log("roomset", roomId);
     setRoomId(roomId);
+    roomRef.current = roomId;
   }
   async function fetchRequest() {
     let res = await axios.get("http://localhost:3001/api/requests");
@@ -132,6 +192,7 @@ export default function ClientPage(props: clientPageProps) {
       socket.on("connect", () => console.log("connected with id", socket.id));
       socket.emit("message", "hello server");
       socket.on("ack", (msg) => alert(msg));
+
       socket.on("joinack", async ({ mesage, friendname }) => {
         alert(mesage);
         let res = await axios.get("http://localhost:3001/api/getMessages", {
@@ -154,6 +215,56 @@ export default function ClientPage(props: clientPageProps) {
       });
       socket.on("messagefromfriendnotreceived", ({ message }) => {
         alert("not send");
+      });
+
+      socket.on("videocalloffer", async ({ offer }) => {
+        console.log("offer from friend", offer);
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+        setLocalStream(stream);
+        const newpeer = new RTCPeerConnection({
+          iceServers: [
+            {
+              urls: [
+                "stun:stun.l.google.com:19302",
+                "stun:global.stun.twilio.com:3478",
+              ],
+            },
+          ],
+        });
+        stream.getTracks().forEach((track) => newpeer.addTrack(track, stream));
+        newpeer.ontrack = (event) => {
+          console.log("got tracks|||");
+          setRemoteStream(event.streams[0]);
+        };
+        newpeer.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit("icecandidate", {
+              candidate: event.candidate,
+              roomId: roomRef.current,
+            });
+          }
+        };
+        await newpeer.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await newpeer.createAnswer();
+        await newpeer?.setLocalDescription(answer);
+        peer.current = newpeer;
+        socket.emit("callanswer", { answer, roomId: roomRef.current });
+        console.log("call answer send", answer);
+      });
+      socket.on("callanswer", async ({ answer }) => {
+        await peer.current.setRemoteDescription(
+          new RTCSessionDescription(answer)
+        );
+        console.log("remote descripotion");
+      });
+      socket.on("peercandidate", async ({ candidate }) => {
+        console.log("ice cnadidate", candidate);
+        if (peer.current) {
+          await peer.current.addIceCandidate(new RTCIceCandidate(candidate));
+        }
       });
 
       setSocket(socket);
@@ -277,14 +388,53 @@ export default function ClientPage(props: clientPageProps) {
       <div className="h-full w-[60%]">
         {messesageSection ? (
           <>
-            <Topbar friend={friend} />
-            <ChatWindow
-              messages={messages}
-              friend={friend.username}
-              setMessages={setMessages}
-              onclick={(message) => handleMessagesend(message)}
-              person={curruser}
-            />
+            <Topbar friend={friend} onclick={handleVideo} />
+            {localStream && (
+              <div className="flex justify-center items-center h-full w-full bg-black relative">
+                <>
+                  <h1 className="bg-white">my video</h1>
+                  <video
+                    ref={myvideo}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-[320px] h-[240px] rounded-md shadow-lg"
+                  />
+                </>
+
+                {remoteStream && (
+                  <>
+                    <h1 className="bg-white">remote video</h1>
+                    <video
+                      ref={remoteVideo}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-[320px] h-[240px] rounded-md shadow-lg"
+                    />
+                  </>
+                )}
+                <button
+                  className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                  onClick={() => {
+                    localStream.getTracks().forEach((track) => track.stop());
+                    setLocalStream(undefined);
+                  }}
+                >
+                  Decline
+                </button>
+              </div>
+            )}
+
+            {!localStream && (
+              <ChatWindow
+                messages={messages}
+                friend={friend.username}
+                setMessages={setMessages}
+                onclick={(message) => handleMessagesend(message)}
+                person={curruser}
+              />
+            )}
           </>
         ) : (
           <>

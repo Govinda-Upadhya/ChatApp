@@ -65,6 +65,15 @@ io.on("connection", (socket: Socket) => {
       io.to(roomId).emit("messagefromfriend", { message, user: curruser });
     }
   );
+  socket.on("calloffer", async ({ offer, roomId }) => {
+    socket.to(roomId).emit("videocalloffer", { offer });
+  });
+  socket.on("callanswer", async ({ answer, roomId }) => {
+    socket.to(roomId).emit("callanswer", { answer });
+  });
+  socket.on("icecandidate", async ({ candidate, roomId }) => {
+    socket.to(roomId).emit("peercandidate", { candidate });
+  });
 });
 
 server.listen(3000, () => console.log("listening.."));

@@ -6,7 +6,8 @@
     "dev": "npx tsc && node ./dist/index.js"
   },
   "devDependencies": {
-    "@repo/typescript-config": "*"
+    "@repo/typescript-config": "*",
+    "@repo/db":"*"
   },
   "keywords": [],
   "author": "",
