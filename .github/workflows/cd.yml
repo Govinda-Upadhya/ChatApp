@@ -21,4 +21,10 @@ jobs:
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            ls -al
+            cd ChatApp 
+            git pull origin main 
+            cd apps
+            cd web
+            npm run build
+            pm2 delete next-app 
+            pm2 start npm --name "next-app" -- start
