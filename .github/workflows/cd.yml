@@ -21,6 +21,7 @@ jobs:
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
           script: |
+            export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v22.18.0/bin
             cd ChatApp 
             git pull origin main 
             cd apps
