@@ -27,5 +27,4 @@ jobs:
             cd apps
             cd web
             npm run build
-            pm2 delete next-app 
-            pm2 start npm --name "next-app" -- start
+            pm2 restart next-app
